@@ -14,6 +14,15 @@ public class ConsoleHelper {
 		return SCANNER.nextLine();
 	}
 
+	public static String promptPassword(String label) {
+		java.io.Console console = System.console();
+		if (console != null) {
+			char[] raw = console.readPassword(label);
+			return raw == null ? "" : new String(raw);
+		}
+		return prompt(label);
+	}
+
 	public static String promptNonBlank(String label) {
 		return promptWithValidation(label, value -> {
 			if (value == null || value.trim().isEmpty()) {

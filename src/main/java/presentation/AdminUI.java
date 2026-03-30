@@ -1,11 +1,13 @@
 package presentation;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import model.Booking;
 import model.Equipment;
 import model.Enum.BookingStatus;
 import model.Room;
+import model.Service;
 import model.User;
 import util.DateTimeUtil;
 import service.AdminService;
@@ -28,10 +30,12 @@ public class AdminUI {
 					"2. Quan ly thiet bi di dong",
 					"3. Quan ly nguoi dung (tao Support)",
 					"4. Duyet/Tu choi yeu cau dat phong",
+					"5. Quan ly dich vu di kem",
+					"6. Xem danh sach nguoi dung",
 					"0. Dang xuat"
 			);
 
-			int choice = MenuHelper.askChoice(0, 4);
+			int choice = MenuHelper.askChoice(0, 6);
 			switch (choice) {
 				case 1:
 					handleRoomManagement();
@@ -44,6 +48,12 @@ public class AdminUI {
 					break;
 				case 4:
 					handleBookingApproval();
+					break;
+				case 5:
+					handleServiceManagement();
+					break;
+				case 6:
+					showUsers();
 					break;
 				case 0:
 					running = false;
@@ -63,10 +73,11 @@ public class AdminUI {
 					"2. Them phong",
 					"3. Sua phong",
 					"4. Xoa phong",
+					"5. Tim kiem phong theo ten",
 					"0. Quay lai"
 			);
 
-			int choice = MenuHelper.askChoice(0, 4);
+			int choice = MenuHelper.askChoice(0, 5);
 			switch (choice) {
 				case 1:
 					showRooms();
@@ -79,6 +90,9 @@ public class AdminUI {
 					break;
 				case 4:
 					deleteRoom();
+					break;
+				case 5:
+					searchRoomByName();
 					break;
 				case 0:
 					running = false;
@@ -95,16 +109,28 @@ public class AdminUI {
 			MenuHelper.printHeader("QUAN LY THIET BI DI DONG");
 			MenuHelper.printOptions(
 					"1. Xem danh sach thiet bi",
-					"2. Cap nhat so luong kha dung",
+					"2. Them thiet bi",
+					"3. Sua thiet bi",
+					"4. Xoa thiet bi",
+					"5. Cap nhat so luong kha dung",
 					"0. Quay lai"
 			);
 
-			int choice = MenuHelper.askChoice(0, 2);
+			int choice = MenuHelper.askChoice(0, 5);
 			switch (choice) {
 				case 1:
 					showEquipments();
 					break;
 				case 2:
+					createEquipment();
+					break;
+				case 3:
+					updateEquipment();
+					break;
+				case 4:
+					deleteEquipment();
+					break;
+				case 5:
 					updateEquipmentAvailableQuantity();
 					break;
 				case 0:
@@ -125,7 +151,7 @@ public class AdminUI {
 			}
 			return validated;
 		});
-		String password = ConsoleHelper.promptWithValidation("Mat khau: ", Validator::validatePassword);
+		String password = promptValidatedPassword("Mat khau: ");
 		String fullName = ConsoleHelper.promptWithValidation("Ho ten: ", Validator::validateFullName);
 		String phone = ConsoleHelper.promptWithValidation("So dien thoai: ", Validator::validatePhone);
 		String email = ConsoleHelper.promptWithValidation("Email: ", value -> {
@@ -196,6 +222,41 @@ public class AdminUI {
 		ConsoleHelper.waitForEnter();
 	}
 
+	private void handleServiceManagement() {
+		boolean running = true;
+		while (running) {
+			MenuHelper.printHeader("QUAN LY DICH VU DI KEM");
+			MenuHelper.printOptions(
+					"1. Xem danh sach dich vu",
+					"2. Them dich vu",
+					"3. Sua dich vu",
+					"4. Xoa dich vu",
+					"0. Quay lai"
+			);
+
+			int choice = MenuHelper.askChoice(0, 4);
+			switch (choice) {
+				case 1:
+					showServices();
+					break;
+				case 2:
+					createService();
+					break;
+				case 3:
+					updateService();
+					break;
+				case 4:
+					deleteService();
+					break;
+				case 0:
+					running = false;
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
 	private void showRooms() {
 		MenuHelper.printHeader("DANH SACH PHONG HOP");
 		List<Room> rooms = adminService.getAllRooms();
@@ -232,6 +293,33 @@ public class AdminUI {
 			System.out.println("Them phong hop thanh cong. ID phong: " + room.getId());
 		} catch (IllegalArgumentException | IllegalStateException e) {
 			System.out.println("Them phong hop that bai: " + e.getMessage());
+		}
+		ConsoleHelper.waitForEnter();
+	}
+
+	private void searchRoomByName() {
+		MenuHelper.printHeader("TIM KIEM PHONG THEO TEN");
+		String keyword = ConsoleHelper.promptWithValidation("Nhap tu khoa: ", value -> Validator.requireNotBlank(value, "Tu khoa"));
+
+		try {
+			List<Room> rooms = adminService.searchRoomsByName(keyword);
+			if (rooms.isEmpty()) {
+				System.out.println("Khong tim thay phong nao phu hop.");
+			} else {
+				List<String[]> rows = new ArrayList<>();
+				for (Room room : rooms) {
+					rows.add(new String[]{
+							String.valueOf(room.getId()),
+							room.getName(),
+							String.valueOf(room.getCapacity()),
+							room.getLocation(),
+							room.getDescription()
+					});
+				}
+				MenuHelper.printTable(new String[]{"ID", "Ten phong", "Suc chua", "Vi tri", "Mo ta"}, rows);
+			}
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			System.out.println("Tim kiem that bai: " + e.getMessage());
 		}
 		ConsoleHelper.waitForEnter();
 	}
@@ -286,6 +374,131 @@ public class AdminUI {
 					new String[]{"ID", "Ten thiet bi", "Tong so luong", "So luong kha dung", "Trang thai"},
 					rows
 			);
+		}
+		ConsoleHelper.waitForEnter();
+	}
+
+	private void createEquipment() {
+		MenuHelper.printHeader("THEM THIET BI");
+		String name = ConsoleHelper.promptWithValidation("Ten thiet bi: ", value -> Validator.requireNotBlank(value, "Ten thiet bi"));
+		int totalQuantity = ConsoleHelper.promptPositiveInt("Tong so luong: ");
+		int availableQuantity = ConsoleHelper.promptNonNegativeInt("So luong kha dung: ");
+
+		try {
+			Equipment equipment = adminService.createEquipment(name, totalQuantity, availableQuantity);
+			System.out.println("Them thiet bi thanh cong. ID: " + equipment.getId());
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			System.out.println("Them thiet bi that bai: " + e.getMessage());
+		}
+		ConsoleHelper.waitForEnter();
+	}
+
+	private void updateEquipment() {
+		MenuHelper.printHeader("SUA THIET BI");
+		int equipmentId = promptExistingEquipmentId("Nhap ID thiet bi can sua: ");
+		String name = ConsoleHelper.promptWithValidation("Ten thiet bi moi: ", value -> Validator.requireNotBlank(value, "Ten thiet bi"));
+		int totalQuantity = ConsoleHelper.promptPositiveInt("Tong so luong moi: ");
+		int availableQuantity = ConsoleHelper.promptNonNegativeInt("So luong kha dung moi: ");
+
+		try {
+			adminService.updateEquipment(equipmentId, name, totalQuantity, availableQuantity);
+			System.out.println("Cap nhat thiet bi thanh cong.");
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			System.out.println("Cap nhat thiet bi that bai: " + e.getMessage());
+		}
+		ConsoleHelper.waitForEnter();
+	}
+
+	private void deleteEquipment() {
+		MenuHelper.printHeader("XOA THIET BI");
+		int equipmentId = promptExistingEquipmentId("Nhap ID thiet bi can xoa: ");
+
+		try {
+			adminService.deleteEquipment(equipmentId);
+			System.out.println("Xoa thiet bi thanh cong.");
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			System.out.println("Xoa thiet bi that bai: " + e.getMessage());
+		}
+		ConsoleHelper.waitForEnter();
+	}
+
+	private void showServices() {
+		MenuHelper.printHeader("DANH SACH DICH VU");
+		List<Service> services = adminService.getAllServices();
+		if (services.isEmpty()) {
+			System.out.println("Chua co dich vu nao.");
+		} else {
+			List<String[]> rows = new ArrayList<>();
+			for (Service service : services) {
+				rows.add(new String[]{
+						String.valueOf(service.getId()),
+						service.getName(),
+						service.getPrice().toPlainString()
+				});
+			}
+			MenuHelper.printTable(new String[]{"ID", "Ten dich vu", "Gia"}, rows);
+		}
+		ConsoleHelper.waitForEnter();
+	}
+
+	private void createService() {
+		MenuHelper.printHeader("THEM DICH VU");
+		String name = ConsoleHelper.promptWithValidation("Ten dich vu: ", value -> Validator.requireNotBlank(value, "Ten dich vu"));
+		BigDecimal price = promptPrice("Gia dich vu: ");
+
+		try {
+			Service service = adminService.createService(name, price);
+			System.out.println("Them dich vu thanh cong. ID: " + service.getId());
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			System.out.println("Them dich vu that bai: " + e.getMessage());
+		}
+		ConsoleHelper.waitForEnter();
+	}
+
+	private void updateService() {
+		MenuHelper.printHeader("SUA DICH VU");
+		int serviceId = promptExistingServiceId("Nhap ID dich vu can sua: ");
+		String name = ConsoleHelper.promptWithValidation("Ten dich vu moi: ", value -> Validator.requireNotBlank(value, "Ten dich vu"));
+		BigDecimal price = promptPrice("Gia dich vu moi: ");
+
+		try {
+			adminService.updateService(serviceId, name, price);
+			System.out.println("Cap nhat dich vu thanh cong.");
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			System.out.println("Cap nhat dich vu that bai: " + e.getMessage());
+		}
+		ConsoleHelper.waitForEnter();
+	}
+
+	private void deleteService() {
+		MenuHelper.printHeader("XOA DICH VU");
+		int serviceId = promptExistingServiceId("Nhap ID dich vu can xoa: ");
+
+		try {
+			adminService.deleteService(serviceId);
+			System.out.println("Xoa dich vu thanh cong.");
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			System.out.println("Xoa dich vu that bai: " + e.getMessage());
+		}
+		ConsoleHelper.waitForEnter();
+	}
+
+	private void showUsers() {
+		MenuHelper.printHeader("DANH SACH NGUOI DUNG");
+		List<User> users = adminService.getAllUsers();
+		if (users.isEmpty()) {
+			System.out.println("Chua co nguoi dung nao.");
+		} else {
+			List<String[]> rows = new ArrayList<>();
+			for (User user : users) {
+				rows.add(new String[]{
+						String.valueOf(user.getId()),
+						user.getUsername(),
+						user.getRole() == null ? "" : user.getRole().name(),
+						user.getFullName() == null ? "" : user.getFullName()
+				});
+			}
+			MenuHelper.printTable(new String[]{"ID", "Username", "Role", "Ho ten"}, rows);
 		}
 		ConsoleHelper.waitForEnter();
 	}
@@ -361,6 +574,43 @@ public class AdminUI {
 		return null;
 	}
 
+	private int promptExistingServiceId(String label) {
+		while (true) {
+			int id = ConsoleHelper.promptPositiveInt(label);
+			if (findServiceById(id) != null) {
+				return id;
+			}
+			System.out.println("Canh bao: Khong tim thay dich vu voi ID " + id + ". Vui long nhap lai.");
+		}
+	}
+
+	private Service findServiceById(int id) {
+		List<Service> services = adminService.getAllServices();
+		for (Service service : services) {
+			if (service.getId() != null && service.getId() == id) {
+				return service;
+			}
+		}
+		return null;
+	}
+
+	private BigDecimal promptPrice(String label) {
+		while (true) {
+			String raw = ConsoleHelper.prompt(label);
+			try {
+				BigDecimal price = new BigDecimal(raw.trim());
+				if (price.compareTo(BigDecimal.ZERO) < 0) {
+					throw new IllegalArgumentException("Gia khong duoc am.");
+				}
+				return price;
+			} catch (NumberFormatException e) {
+				System.out.println("Canh bao: Gia phai la so hop le.");
+			} catch (IllegalArgumentException e) {
+				System.out.println("Canh bao: " + e.getMessage());
+			}
+		}
+	}
+
 	private void showBookings(List<Booking> bookings) {
 		List<String[]> rows = new ArrayList<>();
 		for (Booking booking : bookings) {
@@ -403,5 +653,15 @@ public class AdminUI {
 		}
 
 		MenuHelper.printTable(new String[]{"ID", "Ho ten", "Username", "Email"}, rows);
+	}
+
+	private String promptValidatedPassword(String label) {
+		while (true) {
+			try {
+				return Validator.validatePassword(ConsoleHelper.promptPassword(label));
+			} catch (IllegalArgumentException e) {
+				System.out.println("Canh bao: " + e.getMessage());
+			}
+		}
 	}
 }

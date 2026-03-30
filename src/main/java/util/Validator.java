@@ -1,5 +1,6 @@
 package util;
 
+import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
 public class Validator {
@@ -71,5 +72,28 @@ public class Validator {
 			throw new IllegalArgumentException("So dien thoai phai co 9-15 chu so va co the bat dau bang +.");
 		}
 		return normalized;
+	}
+
+	public static LocalDateTime validateNotPastDateTime(LocalDateTime dateTime, String fieldName) {
+		if (dateTime == null) {
+			throw new IllegalArgumentException(fieldName + " khong duoc de trong.");
+		}
+		if (dateTime.isBefore(LocalDateTime.now())) {
+			throw new IllegalArgumentException(fieldName + " khong duoc o qua khu.");
+		}
+		return dateTime;
+	}
+
+	public static int validateParticipantCount(int participantCount) {
+		if (participantCount <= 0) {
+			throw new IllegalArgumentException("So nguoi tham gia phai lon hon 0.");
+		}
+		return participantCount;
+	}
+
+	public static void validateRoomCapacityVsParticipants(int roomCapacity, int participantCount) {
+		if (roomCapacity <= participantCount) {
+			throw new IllegalArgumentException("Suc chua phong phai lon hon so nguoi tham gia.");
+		}
 	}
 }

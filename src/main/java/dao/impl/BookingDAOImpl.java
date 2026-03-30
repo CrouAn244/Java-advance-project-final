@@ -216,6 +216,42 @@ public class BookingDAOImpl implements IBookingDAO {
 		}
 	}
 
+	@Override
+	public boolean deletePendingByUser(int bookingId, int userId) {
+		String deleteDetails = "DELETE FROM booking_details WHERE booking_id = ?";
+		String deleteBooking = "DELETE FROM bookings WHERE id = ? AND user_id = ? AND status = 'PENDING'";
+
+		try (Connection connection = DBConnection.openConnection()) {
+			connection.setAutoCommit(false);
+			try {
+				try (PreparedStatement detailStatement = connection.prepareStatement(deleteDetails)) {
+					detailStatement.setInt(1, bookingId);
+					detailStatement.executeUpdate();
+				}
+
+				int affectedRows;
+				try (PreparedStatement bookingStatement = connection.prepareStatement(deleteBooking)) {
+					bookingStatement.setInt(1, bookingId);
+					bookingStatement.setInt(2, userId);
+					affectedRows = bookingStatement.executeUpdate();
+				}
+
+				if (affectedRows == 0) {
+					connection.rollback();
+					return false;
+				}
+
+				connection.commit();
+				return true;
+			} catch (SQLException e) {
+				connection.rollback();
+				throw new IllegalStateException("Khong the huy booking dang cho duyet.", e);
+			}
+		} catch (SQLException e) {
+			throw new IllegalStateException("Loi SQL khi huy booking.", e);
+		}
+	}
+
 	private Booking mapRow(ResultSet rs) throws SQLException {
 		Timestamp createdAt = rs.getTimestamp("created_at");
 		return new Booking(

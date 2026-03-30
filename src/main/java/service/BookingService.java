@@ -13,16 +13,20 @@ import model.Equipment;
 import model.Enum.BookingStatus;
 import model.Enum.PreparationStatus;
 import model.Room;
+import model.Service;
+import util.Validator;
 
 public class BookingService {
 	private final IBookingDAO bookingDAO;
 	private final RoomService roomService;
 	private final EquipmentService equipmentService;
+	private final ServiceService serviceService;
 
 	public BookingService() {
 		this.bookingDAO = new BookingDAOImpl();
 		this.roomService = new RoomService();
 		this.equipmentService = new EquipmentService();
+		this.serviceService = new ServiceService();
 	}
 
 	public List<Room> getAvailableRooms(LocalDateTime startTime, LocalDateTime endTime) {
@@ -43,6 +47,10 @@ public class BookingService {
 
 	public List<Equipment> getAllEquipments() {
 		return equipmentService.getAllEquipments();
+	}
+
+	public List<Service> getAllServices() {
+		return serviceService.getAllServices();
 	}
 
 	public List<Booking> getBookingsByUser(int userId) {
@@ -113,24 +121,41 @@ public class BookingService {
 		}
 	}
 
+	public void cancelPendingBooking(int userId, int bookingId) {
+		if (userId <= 0 || bookingId <= 0) {
+			throw new IllegalArgumentException("Thong tin huy booking khong hop le.");
+		}
+
+		boolean deleted = bookingDAO.deletePendingByUser(bookingId, userId);
+		if (!deleted) {
+			throw new IllegalArgumentException("Chi co the huy booking PENDING cua chinh ban.");
+		}
+	}
+
 	public Booking createBookingRequest(
 			int userId,
 			int roomId,
+			int participantCount,
 			LocalDateTime startTime,
 			LocalDateTime endTime,
-			Map<Integer, Integer> equipmentRequests
+			Map<Integer, Integer> equipmentRequests,
+			Map<Integer, Integer> serviceRequests
 	) {
 		if (userId <= 0) {
 			throw new IllegalArgumentException("Ma nguoi dung khong hop le.");
 		}
+		int validatedParticipants = Validator.validateParticipantCount(participantCount);
 		validateTimeRange(startTime, endTime);
-		ensureRoomExists(roomId);
+		Room room = findRoomById(roomId);
+		Validator.validateRoomCapacityVsParticipants(room.getCapacity(), validatedParticipants);
 
 		if (bookingDAO.existsTimeConflict(roomId, startTime, endTime)) {
 			throw new IllegalArgumentException("Phong da co lich trung trong khoang thoi gian nay.");
 		}
 
-		List<BookingDetail> details = buildEquipmentDetails(equipmentRequests);
+		List<BookingDetail> details = new ArrayList<>();
+		details.addAll(buildEquipmentDetails(equipmentRequests));
+		details.addAll(buildServiceDetails(serviceRequests));
 
 		Booking booking = new Booking();
 		booking.setUserId(userId);
@@ -150,18 +175,17 @@ public class BookingService {
 	}
 
 	private void validateTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
-		if (startTime == null || endTime == null) {
-			throw new IllegalArgumentException("Thoi gian bat dau va ket thuc khong duoc de trong.");
-		}
+		Validator.validateNotPastDateTime(startTime, "Thoi gian bat dau");
+		Validator.validateNotPastDateTime(endTime, "Thoi gian ket thuc");
 		if (!startTime.isBefore(endTime)) {
 			throw new IllegalArgumentException("Thoi gian bat dau phai nho hon thoi gian ket thuc.");
 		}
 	}
 
-	private void ensureRoomExists(int roomId) {
+	private Room findRoomById(int roomId) {
 		for (Room room : roomService.getAllRooms()) {
 			if (room.getId() != null && room.getId() == roomId) {
-				return;
+				return room;
 			}
 		}
 		throw new IllegalArgumentException("Khong tim thay phong hop voi ID " + roomId + ".");
@@ -201,6 +225,43 @@ public class BookingService {
 
 			BookingDetail detail = new BookingDetail();
 			detail.setEquipmentId(equipmentId);
+			detail.setQuantity(quantity);
+			details.add(detail);
+		}
+
+		return details;
+	}
+
+	private List<BookingDetail> buildServiceDetails(Map<Integer, Integer> serviceRequests) {
+		List<BookingDetail> details = new ArrayList<>();
+		if (serviceRequests == null || serviceRequests.isEmpty()) {
+			return details;
+		}
+
+		Map<Integer, Service> serviceMap = new HashMap<>();
+		for (Service service : serviceService.getAllServices()) {
+			if (service.getId() != null) {
+				serviceMap.put(service.getId(), service);
+			}
+		}
+
+		for (Map.Entry<Integer, Integer> entry : serviceRequests.entrySet()) {
+			Integer serviceId = entry.getKey();
+			Integer quantity = entry.getValue();
+			if (serviceId == null || quantity == null) {
+				continue;
+			}
+			if (quantity <= 0) {
+				throw new IllegalArgumentException("So luong dich vu phai lon hon 0.");
+			}
+
+			Service service = serviceMap.get(serviceId);
+			if (service == null) {
+				throw new IllegalArgumentException("Khong tim thay dich vu voi ID " + serviceId + ".");
+			}
+
+			BookingDetail detail = new BookingDetail();
+			detail.setServiceId(serviceId);
 			detail.setQuantity(quantity);
 			details.add(detail);
 		}

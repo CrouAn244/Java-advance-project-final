@@ -56,7 +56,7 @@ public class AuthUI {
 			}
 			return validated;
 		});
-		String password = ConsoleHelper.promptWithValidation("Mat khau: ", Validator::validatePassword);
+		String password = promptValidatedPassword("Mat khau: ");
 		String fullName = ConsoleHelper.promptWithValidation("Ho ten: ", Validator::validateFullName);
 		String phone = ConsoleHelper.promptWithValidation("So dien thoai: ", Validator::validatePhone);
 		String email = ConsoleHelper.promptWithValidation("Email: ", value -> {
@@ -82,10 +82,7 @@ public class AuthUI {
 				"Ten dang nhap hoac email: ",
 				value -> Validator.requireNotBlank(value, "Ten dang nhap hoac email")
 		);
-		String password = ConsoleHelper.promptWithValidation(
-				"Mat khau: ",
-				value -> Validator.requireNotBlank(value, "Mat khau")
-		);
+		String password = Validator.requireNotBlank(ConsoleHelper.promptPassword("Mat khau: "), "Mat khau");
 
 		try {
 			User user = authService.login(identifier, password);
@@ -132,6 +129,16 @@ public class AuthUI {
 				return "Nhan vien";
 			default:
 				return role.name();
+		}
+	}
+
+	private String promptValidatedPassword(String label) {
+		while (true) {
+			try {
+				return Validator.validatePassword(ConsoleHelper.promptPassword(label));
+			} catch (IllegalArgumentException e) {
+				System.out.println("Canh bao: " + e.getMessage());
+			}
 		}
 	}
 }

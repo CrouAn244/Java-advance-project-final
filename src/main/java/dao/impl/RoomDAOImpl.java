@@ -31,6 +31,25 @@ public class RoomDAOImpl implements IRoomDAO {
 	}
 
 	@Override
+	public List<Room> findByNameLike(String keyword) {
+		String sql = "SELECT id, name, capacity, location, description FROM rooms WHERE LOWER(name) LIKE ? ORDER BY id";
+		List<Room> rooms = new ArrayList<>();
+
+		try (Connection connection = DBConnection.openConnection();
+				 PreparedStatement statement = connection.prepareStatement(sql)) {
+			statement.setString(1, "%" + keyword.toLowerCase() + "%");
+			try (ResultSet rs = statement.executeQuery()) {
+				while (rs.next()) {
+					rooms.add(mapRow(rs));
+				}
+			}
+			return rooms;
+		} catch (SQLException e) {
+			throw new IllegalStateException("Khong the tim kiem phong hop theo ten.", e);
+		}
+	}
+
+	@Override
 	public Optional<Room> findById(int id) {
 		String sql = "SELECT id, name, capacity, location, description FROM rooms WHERE id = ?";
 

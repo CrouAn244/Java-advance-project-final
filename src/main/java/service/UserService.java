@@ -26,6 +26,10 @@ public class UserService {
 		return userDAO.findByEmail(email).isPresent();
 	}
 
+	public List<User> getAllUsers() {
+		return userDAO.findAll();
+	}
+
 	public List<User> findByRole(Role role) {
 		return userDAO.findByRole(role);
 	}

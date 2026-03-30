@@ -17,6 +17,11 @@ public class RoomService {
 		return roomDAO.findAll();
 	}
 
+	public List<Room> searchRoomsByName(String keyword) {
+		String normalized = Validator.requireNotBlank(keyword, "Tu khoa tim kiem");
+		return roomDAO.findByNameLike(normalized);
+	}
+
 	public Room createRoom(String name, int capacity, String location, String description) {
 		String validatedName = Validator.requireNotBlank(name, "Ten phong");
 		String validatedLocation = Validator.requireNotBlank(location, "Vi tri");

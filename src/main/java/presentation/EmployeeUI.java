@@ -10,6 +10,7 @@ import model.Equipment;
 import model.Enum.BookingStatus;
 import model.Enum.PreparationStatus;
 import model.Room;
+import model.Service;
 import model.User;
 import service.BookingService;
 import util.ConsoleHelper;
@@ -29,16 +30,20 @@ public class EmployeeUI {
 			MenuHelper.printOptions(
 					"1. Dat phong",
 					"2. Xem lich dat phong cua toi",
+					"3. Huy booking PENDING",
 					"0. Dang xuat"
 			);
 
-			int choice = MenuHelper.askChoice(0, 2);
+			int choice = MenuHelper.askChoice(0, 3);
 			switch (choice) {
 				case 1:
 					handleCreateBooking(user);
 					break;
 				case 2:
 					handleViewMyBookings(user);
+					break;
+				case 3:
+					handleCancelPendingBooking(user);
 					break;
 				case 0:
 					running = false;
@@ -81,13 +86,36 @@ public class EmployeeUI {
 
 		showAvailableRooms(availableRooms);
 		int roomId = promptAvailableRoomId(availableRooms);
+		int participantCount = ConsoleHelper.promptPositiveInt("So nguoi tham gia: ");
 		Map<Integer, Integer> equipmentRequests = promptEquipmentRequests();
+		Map<Integer, Integer> serviceRequests = promptServiceRequests();
 
 		try {
-			Booking booking = bookingService.createBookingRequest(user.getId(), roomId, startTime, endTime, equipmentRequests);
+			Booking booking = bookingService.createBookingRequest(
+					user.getId(),
+					roomId,
+					participantCount,
+					startTime,
+					endTime,
+					equipmentRequests,
+					serviceRequests
+			);
 			System.out.println("Tao yeu cau dat phong thanh cong. Ma dat phong: " + booking.getId() + ", trang thai: " + booking.getStatus());
 		} catch (IllegalArgumentException | IllegalStateException e) {
 			System.out.println("Dat phong that bai: " + e.getMessage());
+		}
+		ConsoleHelper.waitForEnter();
+	}
+
+	private void handleCancelPendingBooking(User user) {
+		MenuHelper.printHeader("HUY BOOKING PENDING");
+		int bookingId = ConsoleHelper.promptPositiveInt("Nhap ID booking muon huy: ");
+
+		try {
+			bookingService.cancelPendingBooking(user.getId(), bookingId);
+			System.out.println("Huy booking thanh cong.");
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			System.out.println("Huy booking that bai: " + e.getMessage());
 		}
 		ConsoleHelper.waitForEnter();
 	}
@@ -220,6 +248,40 @@ public class EmployeeUI {
 		return requests;
 	}
 
+	private Map<Integer, Integer> promptServiceRequests() {
+		Map<Integer, Integer> requests = new HashMap<>();
+
+		String choice = ConsoleHelper.prompt("Dung them dich vu? (y/n): ").trim().toLowerCase();
+		if (!"y".equals(choice)) {
+			return requests;
+		}
+
+		List<Service> services = bookingService.getAllServices();
+		if (services.isEmpty()) {
+			System.out.println("Hien khong co dich vu de chon.");
+			return requests;
+		}
+
+		showServices(services);
+		while (true) {
+			int serviceId = ConsoleHelper.promptNonNegativeInt("Nhap ID dich vu (0 de dung): ");
+			if (serviceId == 0) {
+				break;
+			}
+
+			Service service = findServiceById(services, serviceId);
+			if (service == null) {
+				System.out.println("Canh bao: Khong tim thay dich vu voi ID " + serviceId + ".");
+				continue;
+			}
+
+			int quantity = ConsoleHelper.promptPositiveInt("So luong su dung: ");
+			requests.put(serviceId, requests.getOrDefault(serviceId, 0) + quantity);
+		}
+
+		return requests;
+	}
+
 	private void showEquipments(List<Equipment> equipments) {
 		List<String[]> rows = new ArrayList<>();
 		for (Equipment equipment : equipments) {
@@ -235,10 +297,33 @@ public class EmployeeUI {
 		MenuHelper.printTable(new String[]{"ID", "Ten thiet bi", "So luong kha dung", "Trang thai"}, rows);
 	}
 
+	private void showServices(List<Service> services) {
+		List<String[]> rows = new ArrayList<>();
+		for (Service service : services) {
+			rows.add(new String[]{
+					String.valueOf(service.getId()),
+					service.getName(),
+					service.getPrice().toPlainString()
+			});
+		}
+
+		System.out.println("Danh sach dich vu co the chon:");
+		MenuHelper.printTable(new String[]{"ID", "Ten dich vu", "Gia"}, rows);
+	}
+
 	private Equipment findEquipmentById(List<Equipment> equipments, int equipmentId) {
 		for (Equipment equipment : equipments) {
 			if (equipment.getId() != null && equipment.getId() == equipmentId) {
 				return equipment;
+			}
+		}
+		return null;
+	}
+
+	private Service findServiceById(List<Service> services, int serviceId) {
+		for (Service service : services) {
+			if (service.getId() != null && service.getId() == serviceId) {
+				return service;
 			}
 		}
 		return null;

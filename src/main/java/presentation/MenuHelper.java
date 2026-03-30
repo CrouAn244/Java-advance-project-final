@@ -5,6 +5,8 @@ import java.util.List;
 import util.ConsoleHelper;
 
 public class MenuHelper {
+	private static final int MAX_COLUMN_WIDTH = 28;
+
 	private MenuHelper() {
 	}
 
@@ -45,7 +47,7 @@ public class MenuHelper {
 
 		int[] widths = new int[headers.length];
 		for (int i = 0; i < headers.length; i++) {
-			widths[i] = headers[i].length();
+			widths[i] = Math.min(MAX_COLUMN_WIDTH, headers[i].length());
 		}
 
 		List<String[]> safeRows = new ArrayList<>();
@@ -55,15 +57,20 @@ public class MenuHelper {
 			}
 			String[] normalized = new String[headers.length];
 			for (int i = 0; i < headers.length; i++) {
-				normalized[i] = i < row.length && row[i] != null ? row[i] : "";
+				normalized[i] = shorten(i < row.length && row[i] != null ? row[i] : "", MAX_COLUMN_WIDTH);
 				widths[i] = Math.max(widths[i], normalized[i].length());
 			}
 			safeRows.add(normalized);
 		}
 
+		String[] normalizedHeaders = new String[headers.length];
+		for (int i = 0; i < headers.length; i++) {
+			normalizedHeaders[i] = shorten(headers[i], MAX_COLUMN_WIDTH);
+		}
+
 		String separator = buildSeparator(widths);
 		System.out.println(separator);
-		System.out.println(buildRow(headers, widths));
+		System.out.println(buildRow(normalizedHeaders, widths));
 		System.out.println(separator);
 		for (String[] row : safeRows) {
 			System.out.println(buildRow(row, widths));
@@ -113,5 +120,18 @@ public class MenuHelper {
 			sb.append(value);
 		}
 		return sb.toString();
+	}
+
+	private static String shorten(String value, int maxLength) {
+		if (value == null) {
+			return "";
+		}
+		if (value.length() <= maxLength) {
+			return value;
+		}
+		if (maxLength <= 3) {
+			return value.substring(0, maxLength);
+		}
+		return value.substring(0, maxLength - 3) + "...";
 	}
 }

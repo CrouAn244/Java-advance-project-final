@@ -72,6 +72,23 @@ public class UserDAOImpl implements IUserDAO {
 	}
 
 	@Override
+	public List<User> findAll() {
+		String sql = "SELECT id, username, password, full_name, phone, email, role, created_at FROM users ORDER BY id";
+		List<User> users = new ArrayList<>();
+
+		try (Connection connection = DBConnection.openConnection();
+				 PreparedStatement statement = connection.prepareStatement(sql);
+				 ResultSet rs = statement.executeQuery()) {
+			while (rs.next()) {
+				users.add(mapRow(rs));
+			}
+			return users;
+		} catch (SQLException e) {
+			throw new IllegalStateException("Khong the lay danh sach user.", e);
+		}
+	}
+
+	@Override
 	public List<User> findByRole(Role role) {
 		String sql = "SELECT id, username, password, full_name, phone, email, role, created_at FROM users WHERE role = ? ORDER BY id";
 		List<User> users = new ArrayList<>();

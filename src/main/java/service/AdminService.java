@@ -1,10 +1,12 @@
 package service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import model.Booking;
 import model.Equipment;
 import model.Enum.Role;
 import model.Room;
+import model.Service;
 import model.User;
 import util.PasswordHash;
 import util.Validator;
@@ -12,12 +14,14 @@ import util.Validator;
 public class AdminService {
 	private final RoomService roomService;
 	private final EquipmentService equipmentService;
+	private final ServiceService serviceService;
 	private final UserService userService;
 	private final BookingService bookingService;
 
 	public AdminService() {
 		this.roomService = new RoomService();
 		this.equipmentService = new EquipmentService();
+		this.serviceService = new ServiceService();
 		this.userService = new UserService();
 		this.bookingService = new BookingService();
 	}
@@ -28,6 +32,10 @@ public class AdminService {
 
 	public Room createRoom(String name, int capacity, String location, String description) {
 		return roomService.createRoom(name, capacity, location, description);
+	}
+
+	public List<Room> searchRoomsByName(String keyword) {
+		return roomService.searchRoomsByName(keyword);
 	}
 
 	public Room updateRoom(int id, String name, int capacity, String location, String description) {
@@ -42,8 +50,36 @@ public class AdminService {
 		return equipmentService.getAllEquipments();
 	}
 
+	public Equipment createEquipment(String name, int totalQuantity, int availableQuantity) {
+		return equipmentService.createEquipment(name, totalQuantity, availableQuantity);
+	}
+
+	public Equipment updateEquipment(int equipmentId, String name, int totalQuantity, int availableQuantity) {
+		return equipmentService.updateEquipment(equipmentId, name, totalQuantity, availableQuantity);
+	}
+
+	public void deleteEquipment(int equipmentId) {
+		equipmentService.deleteEquipment(equipmentId);
+	}
+
 	public Equipment updateEquipmentAvailableQuantity(int equipmentId, int availableQuantity) {
 		return equipmentService.updateAvailableQuantity(equipmentId, availableQuantity);
+	}
+
+	public List<Service> getAllServices() {
+		return serviceService.getAllServices();
+	}
+
+	public Service createService(String name, BigDecimal price) {
+		return serviceService.createService(name, price);
+	}
+
+	public Service updateService(int id, String name, BigDecimal price) {
+		return serviceService.updateService(id, name, price);
+	}
+
+	public void deleteService(int id) {
+		serviceService.deleteService(id);
 	}
 
 	public User createSupportAccount(String username, String password, String fullName, String phone, String email) {
@@ -82,6 +118,10 @@ public class AdminService {
 
 	public List<Booking> getAllBookings() {
 		return bookingService.getAllBookings();
+	}
+
+	public List<User> getAllUsers() {
+		return userService.getAllUsers();
 	}
 
 	public List<User> getSupportUsers() {

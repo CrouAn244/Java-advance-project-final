@@ -24,4 +24,6 @@ public interface IBookingDAO {
 	boolean updateApproval(int bookingId, BookingStatus status, Integer supportStaffId, PreparationStatus preparationStatus);
 
 	boolean updatePreparationStatus(int bookingId, int supportStaffId, PreparationStatus preparationStatus);
+
+	boolean deletePendingByUser(int bookingId, int userId);
 }

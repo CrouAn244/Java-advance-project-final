@@ -7,6 +7,8 @@ import model.Room;
 public interface IRoomDAO {
 	List<Room> findAll();
 
+	List<Room> findByNameLike(String keyword);
+
 	Optional<Room> findById(int id);
 
 	Room save(Room room);

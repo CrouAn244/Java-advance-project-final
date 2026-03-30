@@ -12,6 +12,8 @@ public interface IUserDAO {
 
 	Optional<User> findByUsernameOrEmail(String identifier);
 
+	List<User> findAll();
+
 	List<User> findByRole(Role role);
 
 	User save(User user);
