@@ -73,7 +73,7 @@ public class AuthService {
 				"Admin@123",
 				"System Admin",
 				"+84900000001",
-				"admin@company.local",
+				"admin@gmail.com",
 				Role.ADMIN
 		);
 
@@ -82,7 +82,7 @@ public class AuthService {
 				"Support@123",
 				"Support Team",
 				"+84900000002",
-				"support@company.local",
+				"support@gmail.com",
 				Role.SUPPORT
 		);
 	}

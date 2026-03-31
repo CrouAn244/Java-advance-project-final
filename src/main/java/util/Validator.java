@@ -93,7 +93,7 @@ public class Validator {
 
 	public static void validateRoomCapacityVsParticipants(int roomCapacity, int participantCount) {
 		if (roomCapacity <= participantCount) {
-			throw new IllegalArgumentException("Suc chua phong phai lon hon so nguoi tham gia.");
+			throw new IllegalArgumentException("So nguoi tham gia phai be hon suc chua phong.");
 		}
 	}
 }
