@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import model.Booking;
 import model.BookingDetail;
-import model.Enum.BookingStatus;
-import model.Enum.PreparationStatus;
+import model.enums.BookingStatus;
+import model.enums.PreparationStatus;
 
 public interface IBookingDAO {
 	boolean existsTimeConflict(int roomId, LocalDateTime requestedStart, LocalDateTime requestedEnd);

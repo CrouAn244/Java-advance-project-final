@@ -1,6 +1,6 @@
 package presentation;
 
-import model.Enum.Role;
+import model.enums.Role;
 import model.User;
 import service.AuthService;
 import util.ConsoleHelper;
@@ -22,14 +22,14 @@ public class AuthUI {
 	public void run() {
 		boolean running = true;
 		while (running) {
-			MenuHelper.printHeader("MENU XAC THUC");
-			MenuHelper.printOptions(
-					"1. Dang ky (Nhan vien)",
-					"2. Dang nhap",
-					"0. Thoat"
-			);
+			System.out.println();
+			System.out.println(ConsoleHelper.ANSI_CYAN + "================= MENU XAC THUC =================" + ConsoleHelper.ANSI_RESET);
+			System.out.println("1. Dang ky (Nhan vien)");
+			System.out.println("2. Dang nhap");
+			System.out.println("0. Thoat");
+			System.out.println(ConsoleHelper.ANSI_CYAN + "==================================================" + ConsoleHelper.ANSI_RESET);
 
-			int choice = MenuHelper.askChoice(0, 2);
+			int choice = askChoice(0, 2);
 			switch (choice) {
 				case 1:
 					handleRegister();
@@ -48,7 +48,8 @@ public class AuthUI {
 	}
 
 	private void handleRegister() {
-		MenuHelper.printHeader("DANG KY NHAN VIEN");
+		System.out.println();
+		System.out.println(ConsoleHelper.ANSI_CYAN + "================= DANG KY NHAN VIEN =================" + ConsoleHelper.ANSI_RESET);
 		String username = ConsoleHelper.promptWithValidation("Ten dang nhap: ", value -> {
 			String validated = Validator.validateUsername(value);
 			if (!authService.isUsernameAvailable(validated)) {
@@ -77,7 +78,8 @@ public class AuthUI {
 	}
 
 	private void handleLogin() {
-		MenuHelper.printHeader("DANG NHAP");
+		System.out.println();
+		System.out.println(ConsoleHelper.ANSI_CYAN + "================= DANG NHAP =================" + ConsoleHelper.ANSI_RESET);
 		String identifier = ConsoleHelper.promptWithValidation(
 				"Ten dang nhap hoac email: ",
 				value -> Validator.requireNotBlank(value, "Ten dang nhap hoac email")
@@ -140,5 +142,9 @@ public class AuthUI {
 				System.out.println("Canh bao: " + e.getMessage());
 			}
 		}
+	}
+
+	private int askChoice(int min, int max) {
+		return ConsoleHelper.promptIntInRange("Chon chuc nang: ", min, max);
 	}
 }

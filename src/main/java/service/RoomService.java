@@ -10,7 +10,14 @@ public class RoomService {
 	private final IRoomDAO roomDAO;
 
 	public RoomService() {
-		this.roomDAO = new RoomDAOImpl();
+		this(new RoomDAOImpl());
+	}
+
+	public RoomService(IRoomDAO roomDAO) {
+		if (roomDAO == null) {
+			throw new IllegalArgumentException("RoomDAO khong duoc null.");
+		}
+		this.roomDAO = roomDAO;
 	}
 
 	public List<Room> getAllRooms() {

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import model.Booking;
 import model.Equipment;
-import model.Enum.Role;
+import model.enums.Role;
 import model.Room;
 import model.Service;
 import model.User;
@@ -19,11 +19,24 @@ public class AdminService {
 	private final BookingService bookingService;
 
 	public AdminService() {
-		this.roomService = new RoomService();
-		this.equipmentService = new EquipmentService();
-		this.serviceService = new ServiceService();
-		this.userService = new UserService();
-		this.bookingService = new BookingService();
+		this(new RoomService(), new EquipmentService(), new ServiceService(), new UserService(), new BookingService());
+	}
+
+	public AdminService(
+			RoomService roomService,
+			EquipmentService equipmentService,
+			ServiceService serviceService,
+			UserService userService,
+			BookingService bookingService
+	) {
+		if (roomService == null || equipmentService == null || serviceService == null || userService == null || bookingService == null) {
+			throw new IllegalArgumentException("AdminService dependencies khong duoc null.");
+		}
+		this.roomService = roomService;
+		this.equipmentService = equipmentService;
+		this.serviceService = serviceService;
+		this.userService = userService;
+		this.bookingService = bookingService;
 	}
 
 	public List<Room> getAllRooms() {

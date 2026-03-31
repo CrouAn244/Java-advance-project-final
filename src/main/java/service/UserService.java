@@ -4,14 +4,21 @@ import dao.IUserDAO;
 import dao.impl.UserDAOImpl;
 import java.util.List;
 import java.util.Optional;
-import model.Enum.Role;
+import model.enums.Role;
 import model.User;
 
 public class UserService {
 	private final IUserDAO userDAO;
 
 	public UserService() {
-		this.userDAO = new UserDAOImpl();
+		this(new UserDAOImpl());
+	}
+
+	public UserService(IUserDAO userDAO) {
+		if (userDAO == null) {
+			throw new IllegalArgumentException("UserDAO khong duoc null.");
+		}
+		this.userDAO = userDAO;
 	}
 
 	public Optional<User> findByIdentifier(String identifier) {

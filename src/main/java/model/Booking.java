@@ -1,8 +1,8 @@
 package model;
 
 import java.time.LocalDateTime;
-import model.Enum.BookingStatus;
-import model.Enum.PreparationStatus;
+import model.enums.BookingStatus;
+import model.enums.PreparationStatus;
 
 public class Booking {
 	private Integer bookingId;

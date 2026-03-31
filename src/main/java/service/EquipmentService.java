@@ -9,7 +9,14 @@ public class EquipmentService {
 	private final IEquipmentDAO equipmentDAO;
 
 	public EquipmentService() {
-		this.equipmentDAO = new EquipmentDAOImpl();
+		this(new EquipmentDAOImpl());
+	}
+
+	public EquipmentService(IEquipmentDAO equipmentDAO) {
+		if (equipmentDAO == null) {
+			throw new IllegalArgumentException("EquipmentDAO khong duoc null.");
+		}
+		this.equipmentDAO = equipmentDAO;
 	}
 
 	public List<Equipment> getAllEquipments() {

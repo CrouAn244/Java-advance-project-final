@@ -10,8 +10,8 @@ import java.util.Map;
 import model.Booking;
 import model.BookingDetail;
 import model.Equipment;
-import model.Enum.BookingStatus;
-import model.Enum.PreparationStatus;
+import model.enums.BookingStatus;
+import model.enums.PreparationStatus;
 import model.Room;
 import model.Service;
 import util.Validator;
@@ -23,10 +23,22 @@ public class BookingService {
 	private final ServiceService serviceService;
 
 	public BookingService() {
-		this.bookingDAO = new BookingDAOImpl();
-		this.roomService = new RoomService();
-		this.equipmentService = new EquipmentService();
-		this.serviceService = new ServiceService();
+		this(new BookingDAOImpl(), new RoomService(), new EquipmentService(), new ServiceService());
+	}
+
+	public BookingService(
+			IBookingDAO bookingDAO,
+			RoomService roomService,
+			EquipmentService equipmentService,
+			ServiceService serviceService
+	) {
+		if (bookingDAO == null || roomService == null || equipmentService == null || serviceService == null) {
+			throw new IllegalArgumentException("BookingService dependencies khong duoc null.");
+		}
+		this.bookingDAO = bookingDAO;
+		this.roomService = roomService;
+		this.equipmentService = equipmentService;
+		this.serviceService = serviceService;
 	}
 
 	public List<Room> getAvailableRooms(LocalDateTime startTime, LocalDateTime endTime) {

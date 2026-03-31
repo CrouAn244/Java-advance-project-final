@@ -1,43 +1,42 @@
 package presentation;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import model.Booking;
-import model.Equipment;
-import model.Enum.BookingStatus;
-import model.Enum.PreparationStatus;
-import model.Room;
-import model.Service;
+import model.enums.BookingStatus;
+import model.enums.PreparationStatus;
 import model.User;
+import presentation.employee.EmployeeBookingCreationUI;
 import service.BookingService;
 import util.ConsoleHelper;
 import util.DateTimeUtil;
+import util.TablePrinter;
 
 public class EmployeeUI {
 	private final BookingService bookingService;
+	private final EmployeeBookingCreationUI bookingCreationUI;
 
 	public EmployeeUI() {
 		this.bookingService = new BookingService();
+		this.bookingCreationUI = new EmployeeBookingCreationUI(bookingService);
 	}
 
+	// Chuc nang menu chinh cho nhan vien.
 	public void run(User user) {
 		boolean running = true;
 		while (running) {
-			MenuHelper.printHeader("MENU NHAN VIEN - " + user.getFullName());
-			MenuHelper.printOptions(
-					"1. Dat phong",
-					"2. Xem lich dat phong cua toi",
-					"3. Huy booking PENDING",
-					"0. Dang xuat"
-			);
+			System.out.println();
+			System.out.println(ConsoleHelper.ANSI_CYAN + "================= MENU NHAN VIEN - " + user.getFullName() + " =================" + ConsoleHelper.ANSI_RESET);
+			System.out.println("1. Dat phong");
+			System.out.println("2. Xem lich dat phong cua toi");
+			System.out.println("3. Huy booking PENDING");
+			System.out.println("0. Dang xuat");
+			System.out.println(ConsoleHelper.ANSI_CYAN + "================================================================" + ConsoleHelper.ANSI_RESET);
 
-			int choice = MenuHelper.askChoice(0, 3);
+			int choice = ConsoleHelper.promptIntInRange("Chon chuc nang: ", 0, 3);
 			switch (choice) {
 				case 1:
-					handleCreateBooking(user);
+					bookingCreationUI.handleCreateBooking(user);
 					break;
 				case 2:
 					handleViewMyBookings(user);
@@ -54,74 +53,10 @@ public class EmployeeUI {
 		}
 	}
 
-	private void handleCreateBooking(User user) {
-		MenuHelper.printHeader("DAT PHONG");
-		List<Room> allRooms = bookingService.getAllRooms();
-		if (allRooms.isEmpty()) {
-			System.out.println("Không có phòng họp");
-			ConsoleHelper.waitForEnter();
-			return;
-		}
-
-		showAllRooms(allRooms);
-
-		System.out.println("Nhap thoi gian theo dinh dang yyyy-MM-dd HH:mm");
-		LocalDateTime startTime = promptDateTime("Thoi gian bat dau: ");
-		LocalDateTime endTime = promptDateTime("Thoi gian ket thuc: ");
-
-		List<Room> availableRooms;
-		try {
-			availableRooms = bookingService.getAvailableRooms(startTime, endTime);
-		} catch (IllegalArgumentException e) {
-			System.out.println("Dat phong that bai: " + e.getMessage());
-			ConsoleHelper.waitForEnter();
-			return;
-		}
-
-		if (availableRooms.isEmpty()) {
-			System.out.println("Khong co phong trong trong khoang thoi gian nay (cac phong da co lich trung).");
-			ConsoleHelper.waitForEnter();
-			return;
-		}
-
-		showAvailableRooms(availableRooms);
-		int roomId = promptAvailableRoomId(availableRooms);
-		int participantCount = ConsoleHelper.promptPositiveInt("So nguoi tham gia: ");
-		Map<Integer, Integer> equipmentRequests = promptEquipmentRequests();
-		Map<Integer, Integer> serviceRequests = promptServiceRequests();
-
-		try {
-			Booking booking = bookingService.createBookingRequest(
-					user.getId(),
-					roomId,
-					participantCount,
-					startTime,
-					endTime,
-					equipmentRequests,
-					serviceRequests
-			);
-			System.out.println("Tao yeu cau dat phong thanh cong. Ma dat phong: " + booking.getId() + ", trang thai: " + booking.getStatus());
-		} catch (IllegalArgumentException | IllegalStateException e) {
-			System.out.println("Dat phong that bai: " + e.getMessage());
-		}
-		ConsoleHelper.waitForEnter();
-	}
-
-	private void handleCancelPendingBooking(User user) {
-		MenuHelper.printHeader("HUY BOOKING PENDING");
-		int bookingId = ConsoleHelper.promptPositiveInt("Nhap ID booking muon huy: ");
-
-		try {
-			bookingService.cancelPendingBooking(user.getId(), bookingId);
-			System.out.println("Huy booking thanh cong.");
-		} catch (IllegalArgumentException | IllegalStateException e) {
-			System.out.println("Huy booking that bai: " + e.getMessage());
-		}
-		ConsoleHelper.waitForEnter();
-	}
-
+	// Chuc nang 2: Xem lich dat phong cua nhan vien hien tai.
 	private void handleViewMyBookings(User user) {
-		MenuHelper.printHeader("LICH DAT PHONG CUA TOI");
+		System.out.println();
+		System.out.println(ConsoleHelper.ANSI_CYAN + "======================================== LICH DAT PHONG CUA TOI ========================================" + ConsoleHelper.ANSI_RESET);
 		List<Booking> bookings;
 		try {
 			bookings = bookingService.getBookingsByUser(user.getId());
@@ -152,180 +87,26 @@ public class EmployeeUI {
 			});
 		}
 
-		MenuHelper.printTable(
-				new String[]{"Ma dat phong", "Phong", "Bat dau", "Ket thuc", "Booking", "Preparation", "Co the hop"},
+		TablePrinter.printTable(
+				new String[]{"Ma dat", "Phong", "Bat dau", "Ket thuc", "Booking", "Preparation", "Co the hop"},
+				new int[]{10, 6, 16, 16, 8, 12, 13},
 				rows
 		);
 		ConsoleHelper.waitForEnter();
 	}
 
-	private LocalDateTime promptDateTime(String label) {
-		while (true) {
-			String raw = ConsoleHelper.prompt(label);
-			try {
-				return DateTimeUtil.parseUserDateTime(raw);
-			} catch (IllegalArgumentException e) {
-				System.out.println("Canh bao: " + e.getMessage());
-			}
+	// Chuc nang 3: Huy booking o trang thai PENDING.
+	private void handleCancelPendingBooking(User user) {
+		System.out.println();
+		System.out.println(ConsoleHelper.ANSI_CYAN + "================= HUY BOOKING PENDING =================" + ConsoleHelper.ANSI_RESET);
+		int bookingId = ConsoleHelper.promptPositiveInt("Nhap ID booking muon huy: ");
+
+		try {
+			bookingService.cancelPendingBooking(user.getId(), bookingId);
+			System.out.println("Huy booking thanh cong.");
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			System.out.println("Huy booking that bai: " + e.getMessage());
 		}
-	}
-
-	private void showAvailableRooms(List<Room> availableRooms) {
-		List<String[]> rows = new ArrayList<>();
-		for (Room room : availableRooms) {
-			rows.add(new String[]{
-					String.valueOf(room.getId()),
-					room.getName(),
-					String.valueOf(room.getCapacity()),
-					room.getLocation(),
-					room.getDescription()
-			});
-		}
-
-		System.out.println("Danh sach phong trong:");
-		MenuHelper.printTable(new String[]{"ID", "Ten phong", "Suc chua", "Vi tri", "Mo ta"}, rows);
-	}
-
-	private void showAllRooms(List<Room> rooms) {
-		List<String[]> rows = new ArrayList<>();
-		for (Room room : rooms) {
-			rows.add(new String[]{
-					String.valueOf(room.getId()),
-					room.getName(),
-					String.valueOf(room.getCapacity()),
-					room.getLocation(),
-					room.getDescription()
-			});
-		}
-
-		System.out.println("Danh sach phong hop:");
-		MenuHelper.printTable(new String[]{"ID", "Ten phong", "Suc chua", "Vi tri", "Mo ta"}, rows);
-	}
-
-	private int promptAvailableRoomId(List<Room> availableRooms) {
-		while (true) {
-			int roomId = ConsoleHelper.promptPositiveInt("Nhap ID phong muon dat: ");
-			for (Room room : availableRooms) {
-				if (room.getId() != null && room.getId() == roomId) {
-					return roomId;
-				}
-			}
-			System.out.println("Canh bao: Phong nay khong nam trong danh sach phong trong. Vui long chon lai.");
-		}
-	}
-
-	private Map<Integer, Integer> promptEquipmentRequests() {
-		Map<Integer, Integer> requests = new HashMap<>();
-
-		String choice = ConsoleHelper.prompt("Muon them thiet bi? (y/n): ").trim().toLowerCase();
-		if (!"y".equals(choice)) {
-			return requests;
-		}
-
-		List<Equipment> equipments = bookingService.getAllEquipments();
-		if (equipments.isEmpty()) {
-			System.out.println("Hien khong co thiet bi de muon them.");
-			return requests;
-		}
-
-		showEquipments(equipments);
-		while (true) {
-			int equipmentId = ConsoleHelper.promptNonNegativeInt("Nhap ID thiet bi (0 de dung): ");
-			if (equipmentId == 0) {
-				break;
-			}
-
-			Equipment equipment = findEquipmentById(equipments, equipmentId);
-			if (equipment == null) {
-				System.out.println("Canh bao: Khong tim thay thiet bi voi ID " + equipmentId + ".");
-				continue;
-			}
-
-			int quantity = ConsoleHelper.promptPositiveInt("So luong muon: ");
-			requests.put(equipmentId, requests.getOrDefault(equipmentId, 0) + quantity);
-		}
-
-		return requests;
-	}
-
-	private Map<Integer, Integer> promptServiceRequests() {
-		Map<Integer, Integer> requests = new HashMap<>();
-
-		String choice = ConsoleHelper.prompt("Dung them dich vu? (y/n): ").trim().toLowerCase();
-		if (!"y".equals(choice)) {
-			return requests;
-		}
-
-		List<Service> services = bookingService.getAllServices();
-		if (services.isEmpty()) {
-			System.out.println("Hien khong co dich vu de chon.");
-			return requests;
-		}
-
-		showServices(services);
-		while (true) {
-			int serviceId = ConsoleHelper.promptNonNegativeInt("Nhap ID dich vu (0 de dung): ");
-			if (serviceId == 0) {
-				break;
-			}
-
-			Service service = findServiceById(services, serviceId);
-			if (service == null) {
-				System.out.println("Canh bao: Khong tim thay dich vu voi ID " + serviceId + ".");
-				continue;
-			}
-
-			int quantity = ConsoleHelper.promptPositiveInt("So luong su dung: ");
-			requests.put(serviceId, requests.getOrDefault(serviceId, 0) + quantity);
-		}
-
-		return requests;
-	}
-
-	private void showEquipments(List<Equipment> equipments) {
-		List<String[]> rows = new ArrayList<>();
-		for (Equipment equipment : equipments) {
-			rows.add(new String[]{
-					String.valueOf(equipment.getId()),
-					equipment.getName(),
-					String.valueOf(equipment.getAvailableQuantity()),
-					equipment.getStatus()
-			});
-		}
-
-		System.out.println("Danh sach thiet bi co the muon:");
-		MenuHelper.printTable(new String[]{"ID", "Ten thiet bi", "So luong kha dung", "Trang thai"}, rows);
-	}
-
-	private void showServices(List<Service> services) {
-		List<String[]> rows = new ArrayList<>();
-		for (Service service : services) {
-			rows.add(new String[]{
-					String.valueOf(service.getId()),
-					service.getName(),
-					service.getPrice().toPlainString()
-			});
-		}
-
-		System.out.println("Danh sach dich vu co the chon:");
-		MenuHelper.printTable(new String[]{"ID", "Ten dich vu", "Gia"}, rows);
-	}
-
-	private Equipment findEquipmentById(List<Equipment> equipments, int equipmentId) {
-		for (Equipment equipment : equipments) {
-			if (equipment.getId() != null && equipment.getId() == equipmentId) {
-				return equipment;
-			}
-		}
-		return null;
-	}
-
-	private Service findServiceById(List<Service> services, int serviceId) {
-		for (Service service : services) {
-			if (service.getId() != null && service.getId() == serviceId) {
-				return service;
-			}
-		}
-		return null;
+		ConsoleHelper.waitForEnter();
 	}
 }

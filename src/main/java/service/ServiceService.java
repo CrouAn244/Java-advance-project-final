@@ -11,7 +11,14 @@ public class ServiceService {
 	private final IServiceDAO serviceDAO;
 
 	public ServiceService() {
-		this.serviceDAO = new ServiceDAOImpl();
+		this(new ServiceDAOImpl());
+	}
+
+	public ServiceService(IServiceDAO serviceDAO) {
+		if (serviceDAO == null) {
+			throw new IllegalArgumentException("ServiceDAO khong duoc null.");
+		}
+		this.serviceDAO = serviceDAO;
 	}
 
 	public List<Service> getAllServices() {

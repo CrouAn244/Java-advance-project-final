@@ -2,7 +2,7 @@ package dao;
 
 import java.util.List;
 import java.util.Optional;
-import model.Enum.Role;
+import model.enums.Role;
 import model.User;
 
 public interface IUserDAO {

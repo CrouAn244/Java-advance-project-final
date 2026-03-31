@@ -5,6 +5,8 @@ import java.util.function.Function;
 
 public class ConsoleHelper {
 	private static final Scanner SCANNER = new Scanner(System.in);
+	public static final String ANSI_RESET = "\u001B[0m";
+	public static final String ANSI_CYAN = "\u001B[36m";
 
 	private ConsoleHelper() {
 	}

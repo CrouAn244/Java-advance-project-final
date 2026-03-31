@@ -3,11 +3,12 @@ package presentation;
 import java.util.ArrayList;
 import java.util.List;
 import model.Booking;
-import model.Enum.PreparationStatus;
+import model.enums.PreparationStatus;
 import model.User;
 import service.SupportService;
 import util.ConsoleHelper;
 import util.DateTimeUtil;
+import util.TablePrinter;
 
 public class SupportUI {
 	private final SupportService supportService;
@@ -19,14 +20,14 @@ public class SupportUI {
 	public void run(User user) {
 		boolean running = true;
 		while (running) {
-			MenuHelper.printHeader("MENU HO TRO - " + user.getFullName());
-			MenuHelper.printOptions(
-					"1. Xem cong viec duoc phan cong",
-					"2. Cap nhat trang thai chuan bi",
-					"0. Dang xuat"
-			);
+			System.out.println();
+			System.out.println(ConsoleHelper.ANSI_CYAN + "================= MENU HO TRO - " + user.getFullName() + " =================" + ConsoleHelper.ANSI_RESET);
+			System.out.println("1. Xem cong viec duoc phan cong");
+			System.out.println("2. Cap nhat trang thai chuan bi");
+			System.out.println("0. Dang xuat");
+			System.out.println(ConsoleHelper.ANSI_CYAN + "==================================================" + ConsoleHelper.ANSI_RESET);
 
-			int choice = MenuHelper.askChoice(0, 2);
+			int choice = askChoice(0, 2);
 			switch (choice) {
 				case 1:
 					handleViewAssignedBookings(user);
@@ -44,7 +45,8 @@ public class SupportUI {
 	}
 
 	private void handleViewAssignedBookings(User user) {
-		MenuHelper.printHeader("CONG VIEC DUOC PHAN CONG");
+		System.out.println();
+		System.out.println(ConsoleHelper.ANSI_CYAN + "================= CONG VIEC DUOC PHAN CONG =================" + ConsoleHelper.ANSI_RESET);
 		List<Booking> bookings = supportService.getAssignedBookings(user.getId());
 		if (bookings.isEmpty()) {
 			System.out.println("Ban chua duoc phan cong cong viec nao.");
@@ -57,7 +59,8 @@ public class SupportUI {
 	}
 
 	private void handleUpdatePreparationStatus(User user) {
-		MenuHelper.printHeader("CAP NHAT TRANG THAI CHUAN BI");
+		System.out.println();
+		System.out.println(ConsoleHelper.ANSI_CYAN + "================= CAP NHAT TRANG THAI CHUAN BI =================" + ConsoleHelper.ANSI_RESET);
 		List<Booking> bookings = supportService.getAssignedBookings(user.getId());
 		if (bookings.isEmpty()) {
 			System.out.println("Ban chua duoc phan cong cong viec nao.");
@@ -76,7 +79,7 @@ public class SupportUI {
 		System.out.println("1. PREPARING");
 		System.out.println("2. READY");
 		System.out.println("3. MISSING_EQUIPMENT");
-		int statusChoice = MenuHelper.askChoice(1, 3);
+		int statusChoice = askChoice(1, 3);
 		PreparationStatus status = mapPreparationStatus(statusChoice);
 
 		try {
@@ -100,8 +103,9 @@ public class SupportUI {
 			});
 		}
 
-		MenuHelper.printTable(
+		TablePrinter.printTable(
 				new String[]{"Booking", "Phong", "Bat dau", "Ket thuc", "Preparation"},
+				new int[]{8, 6, 16, 16, 12},
 				rows
 		);
 	}
@@ -127,4 +131,9 @@ public class SupportUI {
 				throw new IllegalArgumentException("Lua chon trang thai khong hop le.");
 		}
 	}
+
+	private int askChoice(int min, int max) {
+		return ConsoleHelper.promptIntInRange("Chon chuc nang: ", min, max);
+	}
+
 }

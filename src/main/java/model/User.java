@@ -1,7 +1,7 @@
 package model;
 
 import java.time.LocalDateTime;
-import model.Enum.Role;
+import model.enums.Role;
 
 public class User {
 	private Integer id;

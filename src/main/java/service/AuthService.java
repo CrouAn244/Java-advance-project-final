@@ -1,6 +1,6 @@
 package service;
 
-import model.Enum.Role;
+import model.enums.Role;
 import model.User;
 import util.PasswordHash;
 import util.Validator;
@@ -9,7 +9,14 @@ public class AuthService {
 	private final UserService userService;
 
 	public AuthService() {
-		this.userService = new UserService();
+		this(new UserService());
+	}
+
+	public AuthService(UserService userService) {
+		if (userService == null) {
+			throw new IllegalArgumentException("UserService khong duoc null.");
+		}
+		this.userService = userService;
 		seedDefaultAccounts();
 	}
 

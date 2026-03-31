@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Optional;
 import model.Booking;
 import model.BookingDetail;
-import model.Enum.BookingStatus;
-import model.Enum.PreparationStatus;
+import model.enums.BookingStatus;
+import model.enums.PreparationStatus;
 import util.DBConnection;
 
 public class BookingDAOImpl implements IBookingDAO {
